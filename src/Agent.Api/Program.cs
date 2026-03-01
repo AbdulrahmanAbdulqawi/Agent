@@ -1,3 +1,4 @@
+using Agent.Api.Data;
 using Agent.Api.HealthChecks;
 using Agent.Api.Hubs;
 using Agent.Api.Middleware;
@@ -7,6 +8,7 @@ using Agent.Core;
 using Agent.Providers;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Microsoft.EntityFrameworkCore;
 using Polly;
 using Polly.Extensions.Http;
 using Serilog;
@@ -89,7 +91,26 @@ try
         .AddPolicyHandler(retryPolicy)
         .AddPolicyHandler(circuitBreakerPolicy);
 
-    builder.Services.AddSingleton<IAgentStore, AgentStore>();
+    // Configure SQLite database
+    var dataDir = Path.Combine(builder.Environment.ContentRootPath, "..", "..", "data");
+    Directory.CreateDirectory(dataDir);
+    var dbPath = Path.Combine(dataDir, "agent.db");
+    
+    builder.Services.AddDbContext<AgentDbContext>(options =>
+        options.UseSqlite($"Data Source={dbPath}"));
+
+    // Use EF Core-based storage or fall back to JSON file
+    var useDatabase = builder.Configuration.GetValue("UseDatabase", true);
+    if (useDatabase)
+    {
+        builder.Services.AddScoped<IAgentStore, EfAgentStore>();
+        builder.Services.AddScoped<IRunHistoryService, RunHistoryService>();
+    }
+    else
+    {
+        builder.Services.AddSingleton<IAgentStore, AgentStore>();
+    }
+
     builder.Services.AddSingleton<IOrchestratorService, OrchestratorService>();
     builder.Services.AddSingleton<IEnumerable<IAgentProvider>>(sp => new IAgentProvider[]
     {
@@ -102,9 +123,18 @@ try
 
     builder.Services.AddHealthChecks()
         .AddCheck<ProviderHealthCheck>("providers", tags: ["ready"])
-        .AddCheck<StorageHealthCheck>("storage", tags: ["ready"]);
+        .AddCheck<StorageHealthCheck>("storage", tags: ["ready"])
+        .AddDbContextCheck<AgentDbContext>("database", tags: ["ready"]);
 
     var app = builder.Build();
+
+    // Apply database migrations on startup
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AgentDbContext>();
+        db.Database.EnsureCreated();
+        Log.Information("Database initialized at {DbPath}", dbPath);
+    }
 
     app.UseSerilogRequestLogging(options =>
     {

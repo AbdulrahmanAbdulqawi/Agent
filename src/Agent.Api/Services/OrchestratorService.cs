@@ -9,17 +9,25 @@ public class OrchestratorService : IOrchestratorService
 {
     private readonly IEnumerable<IAgentProvider> _providers;
     private readonly IHubContext<AgentHub> _hubContext;
-    private readonly Dictionary<string, (AgentSession Session, CancellationTokenSource Cts)> _runs = new();
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ILogger<OrchestratorService> _logger;
+    private readonly Dictionary<string, (AgentSession Session, LaunchRequest Request, CancellationTokenSource Cts)> _runs = new();
     private readonly Dictionary<string, AgentSession> _completed = new();
     private readonly object _lock = new();
 
     private const int MaxIterations = 20;
     private static readonly TimeSpan Timeout = TimeSpan.FromMinutes(30);
 
-    public OrchestratorService(IEnumerable<IAgentProvider> providers, IHubContext<AgentHub> hubContext)
+    public OrchestratorService(
+        IEnumerable<IAgentProvider> providers, 
+        IHubContext<AgentHub> hubContext,
+        IServiceScopeFactory scopeFactory,
+        ILogger<OrchestratorService> logger)
     {
         _providers = providers;
         _hubContext = hubContext;
+        _scopeFactory = scopeFactory;
+        _logger = logger;
     }
 
     public async Task<string> StartRunAsync(LaunchRequest request, CancellationToken ct = default)
@@ -37,8 +45,10 @@ public class OrchestratorService : IOrchestratorService
 
         lock (_lock)
         {
-            _runs[runId] = (session, cts);
+            _runs[runId] = (session, request, cts);
         }
+
+        await SaveRunToHistoryAsync(session, request);
 
         _ = Task.Run(() => RunLoopAsync(runId, provider, request, fullPrompt, cts.Token), cts.Token);
         await EmitProgress(runId, "AgentStarted", session);
@@ -48,7 +58,7 @@ public class OrchestratorService : IOrchestratorService
 
     public async Task StopRunAsync(string runId, CancellationToken ct = default)
     {
-        (AgentSession Session, CancellationTokenSource Cts) run;
+        (AgentSession Session, LaunchRequest Request, CancellationTokenSource Cts) run;
         lock (_lock)
         {
             if (!_runs.TryGetValue(runId, out run)) return;
@@ -61,6 +71,8 @@ public class OrchestratorService : IOrchestratorService
             await provider.StopAsync(run.Session, ct);
 
         run.Session.Status = AgentStatus.Stopped;
+        run.Session.CompletedAt = DateTime.UtcNow;
+        await UpdateRunHistoryAsync(run.Session);
         await EmitProgress(runId, "AgentStopped", run.Session);
     }
 
@@ -70,6 +82,40 @@ public class OrchestratorService : IOrchestratorService
         {
             if (_runs.TryGetValue(runId, out var run)) return run.Session;
             return _completed.TryGetValue(runId, out var completed) ? completed : null;
+        }
+    }
+
+    private async Task SaveRunToHistoryAsync(AgentSession session, LaunchRequest request)
+    {
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var runHistory = scope.ServiceProvider.GetService<IRunHistoryService>();
+            if (runHistory != null)
+            {
+                await runHistory.SaveRunAsync(session, request.Goal, request.ExtraInfo);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to save run to history: {RunId}", session.RunId);
+        }
+    }
+
+    private async Task UpdateRunHistoryAsync(AgentSession session)
+    {
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var runHistory = scope.ServiceProvider.GetService<IRunHistoryService>();
+            if (runHistory != null)
+            {
+                await runHistory.UpdateRunAsync(session);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to update run history: {RunId}", session.RunId);
         }
     }
 
@@ -101,7 +147,7 @@ public class OrchestratorService : IOrchestratorService
                     lock (_lock)
                     {
                         if (_runs.TryGetValue(runId, out var r))
-                            _runs[runId] = (session, r.Cts);
+                            _runs[runId] = (session, r.Request, r.Cts);
                     }
                     await EmitProgress(runId, "AgentProgress", session);
                     if (session.Status == AgentStatus.Finished || session.Status == AgentStatus.Error)
@@ -156,6 +202,7 @@ public class OrchestratorService : IOrchestratorService
                 _runs.Remove(runId);
                 _completed[runId] = session;
             }
+            await UpdateRunHistoryAsync(session);
             await EmitProgress(runId, "AgentComplete", session);
         }
     }

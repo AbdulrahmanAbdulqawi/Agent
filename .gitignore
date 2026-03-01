@@ -7,7 +7,7 @@ obj/
 *.dll
 *.pdb
 *.log
-[Dd]ata/
+/data/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
@@ -17,6 +17,9 @@ obj/
 *.pidb
 *.scc
 *.sln.docstates
+*.db
+*.db-shm
+*.db-wal
 
 # Keep default appsettings, ignore local overrides with secrets
 # appsettings.Development.json can contain keys - add to .gitignore if needed

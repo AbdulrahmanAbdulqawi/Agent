@@ -11,11 +11,16 @@ public class AgentsController : ControllerBase
 {
     private readonly IAgentStore _agentStore;
     private readonly IOrchestratorService _orchestrator;
+    private readonly IRunHistoryService? _runHistory;
 
-    public AgentsController(IAgentStore agentStore, IOrchestratorService orchestrator)
+    public AgentsController(
+        IAgentStore agentStore, 
+        IOrchestratorService orchestrator,
+        IRunHistoryService? runHistory = null)
     {
         _agentStore = agentStore;
         _orchestrator = orchestrator;
+        _runHistory = runHistory;
     }
 
     [HttpGet]
@@ -99,10 +104,45 @@ public class AgentsController : ControllerBase
     }
 
     [HttpGet("runs/{runId}")]
-    public ActionResult<AgentSession?> GetRun(string runId)
+    public async Task<ActionResult<AgentSession?>> GetRun(string runId, CancellationToken ct)
     {
         var session = _orchestrator.GetSession(runId);
-        return session is null ? NotFound() : Ok(session);
+        if (session != null) return Ok(session);
+        
+        if (_runHistory != null)
+        {
+            var historicalSession = await _runHistory.GetRunAsync(runId, ct);
+            if (historicalSession != null) return Ok(historicalSession);
+        }
+        
+        return NotFound();
+    }
+
+    [HttpGet("{id}/runs")]
+    public async Task<ActionResult<IEnumerable<AgentSession>>> GetAgentRuns(
+        string id, 
+        [FromQuery] int limit = 20, 
+        CancellationToken ct = default)
+    {
+        if (_agentStore.Get(id) is null) return NotFound();
+        
+        if (_runHistory == null)
+            return Ok(Array.Empty<AgentSession>());
+            
+        var runs = await _runHistory.GetRunsForAgentAsync(id, limit, ct);
+        return Ok(runs);
+    }
+
+    [HttpGet("runs")]
+    public async Task<ActionResult<IEnumerable<AgentSession>>> GetRecentRuns(
+        [FromQuery] int limit = 50,
+        CancellationToken ct = default)
+    {
+        if (_runHistory == null)
+            return Ok(Array.Empty<AgentSession>());
+            
+        var runs = await _runHistory.GetRecentRunsAsync(limit, ct);
+        return Ok(runs);
     }
 }
 

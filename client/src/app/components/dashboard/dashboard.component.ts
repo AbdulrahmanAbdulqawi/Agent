@@ -1,11 +1,13 @@
 import { Component, signal } from '@angular/core';
 import { Agent } from '../../models/agent.model';
 import { AgentService } from '../../services/agent.service';
+import { ToastService } from '../../services/toast.service';
 import { AgentListComponent } from '../agent-list/agent-list.component';
 import { AgentFormComponent } from '../agent-form/agent-form.component';
 import { RunAgentComponent } from '../run-agent/run-agent.component';
 import { ConversationViewComponent } from '../conversation-view/conversation-view.component';
 import { StatusIndicatorComponent } from '../status-indicator/status-indicator.component';
+import { LoadingSpinnerComponent } from '../loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -16,6 +18,7 @@ import { StatusIndicatorComponent } from '../status-indicator/status-indicator.c
     RunAgentComponent,
     ConversationViewComponent,
     StatusIndicatorComponent,
+    LoadingSpinnerComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
@@ -24,8 +27,12 @@ export class DashboardComponent {
   view = signal<'list' | 'create' | 'edit' | 'run'>('list');
   selectedAgent = signal<Agent | null>(null);
   runId = signal<string | null>(null);
+  saving = signal(false);
 
-  constructor(public agentService: AgentService) {}
+  constructor(
+    public agentService: AgentService,
+    private toastService: ToastService
+  ) {}
 
   showCreate() {
     this.selectedAgent.set(null);
@@ -46,6 +53,7 @@ export class DashboardComponent {
   onRunStarted(runId: string) {
     this.runId.set(runId);
     this.agentService.connectToRun(runId);
+    this.toastService.info('Agent run started');
   }
 
   backToList() {
@@ -56,15 +64,21 @@ export class DashboardComponent {
   }
 
   async onAgentSaved(agent: Agent) {
+    this.saving.set(true);
     try {
       if (agent.id) {
         await this.agentService.updateAgent(agent.id, agent);
+        this.toastService.success(`Agent "${agent.name}" updated`);
       } else {
         await this.agentService.createAgent(agent);
+        this.toastService.success(`Agent "${agent.name}" created`);
       }
       this.backToList();
     } catch (e) {
-      console.error('Failed to save agent', e);
+      const message = e instanceof Error ? e.message : 'Failed to save agent';
+      this.toastService.error(message);
+    } finally {
+      this.saving.set(false);
     }
   }
 

@@ -1,0 +1,43 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Build outputs
+**/bin
+**/obj
+**/out
+**/dist
+**/node_modules
+
+# Test results
+**/TestResults
+**/coverage
+
+# Logs
+**/logs
+*.log
+
+# Environment files with secrets
+.env
+.env.local
+.env.*.local
+appsettings.Development.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+!README.md
+
+# Docker
+docker-compose*.yml
+Dockerfile*
+.dockerignore

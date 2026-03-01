@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: backend
+    ports:
+      - "5050:5050"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5050
+      - Providers__AnthropicApiKey=${ANTHROPIC_API_KEY:-}
+      - Providers__OpenAIApiKey=${OPENAI_API_KEY:-}
+      - Providers__CursorApiKey=${CURSOR_API_KEY:-}
+    volumes:
+      - ./src:/app/src:ro
+      - ./data:/app/data
+    working_dir: /app
+    command: ["dotnet", "watch", "run", "--project", "src/Agent.Api/Agent.Api.csproj"]
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./client/src:/app/src:ro
+    environment:
+      - NODE_ENV=development
+    command: ["npm", "start", "--", "--host", "0.0.0.0"]
+    depends_on:
+      - api

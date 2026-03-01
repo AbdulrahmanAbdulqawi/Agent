@@ -1,12 +1,16 @@
 <div class="agent-list">
   @if (loading()) {
-    <p class="empty-state">Loading agents...</p>
+    <app-loading-spinner message="Loading agents..." />
   } @else if (error()) {
-    <p class="error">{{ error() }}</p>
+    <div class="error-state">
+      <p class="error">{{ error() }}</p>
+      <button type="button" class="btn btn-primary" (click)="load()">Retry</button>
+    </div>
   } @else if (agents().length === 0) {
     <div class="empty-state">
+      <div class="empty-icon">🤖</div>
       <h3>Create your first agent</h3>
-      <p>No agents yet. Create one to get started.</p>
+      <p>No agents yet. Create one to get started with AI-powered coding assistance.</p>
     </div>
   } @else {
     <div class="agent-cards">
@@ -14,7 +18,7 @@
         <div class="agent-card">
           <div class="card-header">
             <h4>{{ agent.name }}</h4>
-            <span class="provider-badge">{{ agent.provider }}</span>
+            <span class="provider-badge provider-{{ agent.provider.toLowerCase() }}">{{ agent.provider }}</span>
           </div>
           @if (agent.workspacePath) {
             <p class="workspace">{{ agent.workspacePath }}</p>
@@ -22,10 +26,28 @@
           <div class="card-actions">
             <button type="button" class="btn btn-primary" (click)="onRun(agent)">Run</button>
             <button type="button" class="btn btn-secondary" (click)="onEdit(agent)">Edit</button>
-            <button type="button" class="btn btn-danger" (click)="delete(agent)">Delete</button>
+            <button 
+              type="button" 
+              class="btn btn-danger" 
+              (click)="confirmDelete(agent)"
+              [disabled]="deleting()"
+            >
+              {{ deleting() && agentToDelete()?.id === agent.id ? 'Deleting...' : 'Delete' }}
+            </button>
           </div>
         </div>
       }
     </div>
   }
 </div>
+
+<app-confirm-dialog
+  [isOpen]="deleteDialogOpen()"
+  title="Delete Agent"
+  [message]="'Are you sure you want to delete the agent \'' + (agentToDelete()?.name ?? '') + '\'? This action cannot be undone.'"
+  confirmText="Delete"
+  cancelText="Cancel"
+  variant="danger"
+  (confirmed)="performDelete()"
+  (cancelled)="cancelDelete()"
+/>

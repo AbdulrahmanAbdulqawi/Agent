@@ -1,0 +1,48 @@
+.conversation-view {
+  background: var(--bg, #fff);
+  border: 1px solid var(--border, #ddd);
+  border-radius: 8px;
+  padding: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.empty {
+  color: var(--muted, #666);
+  text-align: center;
+  padding: 2rem;
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.message {
+  padding: 0.75rem;
+  border-radius: 8px;
+
+  &.user {
+    background: var(--user-msg-bg, #e3f2fd);
+    margin-left: 2rem;
+  }
+
+  &.assistant {
+    background: var(--assistant-msg-bg, #f5f5f5);
+    margin-right: 2rem;
+  }
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted, #666);
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.content {
+  white-space: pre-wrap;
+  word-break: break-word;
+}

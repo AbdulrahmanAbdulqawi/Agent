@@ -1,0 +1,26 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.dll
+*.pdb
+*.log
+[Dd]ata/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.scc
+*.sln.docstates
+
+# Keep default appsettings, ignore local overrides with secrets
+# appsettings.Development.json can contain keys - add to .gitignore if needed
+
+# Angular
+client/node_modules/
+client/dist/

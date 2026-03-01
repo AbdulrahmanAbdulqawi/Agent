@@ -1,0 +1,22 @@
+<form class="agent-form" (ngSubmit)="onSubmit()">
+  <div class="form-group">
+    <label for="name">Name</label>
+    <input id="name" type="text" [ngModel]="name()" (ngModelChange)="name.set($event)" name="name" required placeholder="My Coding Agent" />
+  </div>
+  <div class="form-group">
+    <label for="provider">AI Provider</label>
+    <select id="provider" [ngModel]="provider()" (ngModelChange)="provider.set($event)" name="provider">
+      @for (p of providers; track p) {
+        <option [value]="p">{{ p }}</option>
+      }
+    </select>
+  </div>
+  <div class="form-group">
+    <label for="workspace">Workspace Path (optional)</label>
+    <input id="workspace" type="text" [ngModel]="workspacePath()" (ngModelChange)="workspacePath.set($event)" name="workspacePath" placeholder="C:\projects\my-app" />
+  </div>
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">Save</button>
+    <button type="button" class="btn btn-secondary" (click)="onCancel()">Cancel</button>
+  </div>
+</form>

@@ -1,0 +1,16 @@
+<div class="conversation-view">
+  @if (!session()) {
+    <p class="empty">No conversation yet. Start a run to see the agent's progress.</p>
+  } @else if (messages.length === 0) {
+    <p class="empty">Waiting for messages...</p>
+  } @else {
+    <div class="messages">
+      @for (msg of messages; track msg.id) {
+        <div class="message" [class.user]="msg.type === 'user_message'" [class.assistant]="msg.type === 'assistant_message'">
+          <span class="label">{{ msg.type === 'user_message' ? 'You' : 'Agent' }}</span>
+          <div class="content">{{ msg.text }}</div>
+        </div>
+      }
+    </div>
+  }
+</div>

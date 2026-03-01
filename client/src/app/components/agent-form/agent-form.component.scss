@@ -1,0 +1,47 @@
+.agent-form {
+  max-width: 400px;
+  padding: 1rem 0;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+
+  input,
+  select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border, #ddd);
+    border-radius: 4px;
+    font-size: 1rem;
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+
+  &.btn-primary {
+    background: var(--primary, #1976d2);
+    color: white;
+  }
+
+  &.btn-secondary {
+    background: var(--secondary, #f5f5f5);
+    color: var(--text, #333);
+  }
+}

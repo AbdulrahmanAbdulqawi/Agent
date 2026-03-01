@@ -1,0 +1,51 @@
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--muted, #999);
+  }
+
+  &.status-running .dot,
+  &.status-creating .dot {
+    background: var(--primary, #1976d2);
+    animation: pulse 1.5s infinite;
+  }
+
+  &.status-finished .dot {
+    background: var(--success, #2e7d32);
+  }
+
+  &.status-error .dot {
+    background: var(--danger, #d32f2f);
+  }
+
+  &.status-stopped .dot {
+    background: var(--muted, #999);
+  }
+
+  .label {
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+
+  .summary {
+    color: var(--muted, #666);
+    font-size: 0.9rem;
+  }
+
+  .error {
+    color: var(--danger, #d32f2f);
+    font-size: 0.9rem;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

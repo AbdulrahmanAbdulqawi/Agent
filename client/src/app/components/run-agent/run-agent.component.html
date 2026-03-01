@@ -1,0 +1,70 @@
+<div class="run-agent">
+  <h3>Run: {{ agent().name }}</h3>
+
+  @if (agent().provider === 'Cursor') {
+    <div class="cursor-repo-notice">
+      <strong>Cursor requires a GitHub repository.</strong> Enter your repo URL below (e.g. https://github.com/your-username/your-repo).
+    </div>
+    <div class="form-group">
+      <label for="repo">GitHub Repository URL <span class="required">*</span></label>
+      <input id="repo" type="url" [ngModel]="repositoryUrl()" (ngModelChange)="repositoryUrl.set($event)" name="repositoryUrl" placeholder="https://github.com/your-username/your-repo" required />
+    </div>
+    <div class="form-group">
+      <label for="ref">Branch / Ref</label>
+      <input id="ref" type="text" [ngModel]="ref()" (ngModelChange)="ref.set($event)" name="ref" placeholder="main" />
+    </div>
+  }
+
+  <div class="form-group">
+    <label for="goal">Goal</label>
+    <textarea
+      id="goal"
+      [ngModel]="goal()"
+      (ngModelChange)="goal.set($event)"
+      name="goal"
+      rows="4"
+      placeholder="e.g. Add JWT auth to my API, Fix the login bug in auth.service.ts"
+      required
+    ></textarea>
+  </div>
+
+  <div class="extra-info-section">
+    <button type="button" class="toggle-btn" (click)="toggleExtraInfo()">
+      {{ extraInfoExpanded() ? 'Hide' : 'Show' }} Extra Info
+    </button>
+    @if (extraInfoExpanded()) {
+      <div class="extra-info-fields">
+        <div class="form-group">
+          <label for="projectPath">Project Path</label>
+          <input id="projectPath" type="text" [ngModel]="projectPath()" (ngModelChange)="projectPath.set($event)" name="projectPath" placeholder="C:\projects\my-app" />
+        </div>
+        <div class="form-group">
+          <label for="techStack">Tech Stack</label>
+          <input id="techStack" type="text" [ngModel]="techStack()" (ngModelChange)="techStack.set($event)" name="techStack" placeholder="Angular 17, .NET 8, SQL Server" />
+        </div>
+        <div class="form-group">
+          <label for="constraints">Constraints</label>
+          <input id="constraints" type="text" [ngModel]="constraints()" (ngModelChange)="constraints.set($event)" name="constraints" placeholder="Don't change the database schema" />
+        </div>
+        <div class="form-group">
+          <label for="relevantFiles">Relevant Files</label>
+          <input id="relevantFiles" type="text" [ngModel]="relevantFiles()" (ngModelChange)="relevantFiles.set($event)" name="relevantFiles" placeholder="src/auth/, app.module.ts" />
+        </div>
+        <div class="form-group">
+          <label for="notes">Notes</label>
+          <textarea id="notes" [ngModel]="notes()" (ngModelChange)="notes.set($event)" name="notes" rows="2" placeholder="API docs, requirements..."></textarea>
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+
+  <div class="form-actions">
+    <button type="button" class="btn btn-primary" (click)="onRun()" [disabled]="loading()">
+      {{ loading() ? 'Starting...' : 'Run Agent' }}
+    </button>
+  </div>
+</div>

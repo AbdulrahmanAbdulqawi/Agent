@@ -1,0 +1,31 @@
+<div class="agent-list">
+  @if (loading()) {
+    <p class="empty-state">Loading agents...</p>
+  } @else if (error()) {
+    <p class="error">{{ error() }}</p>
+  } @else if (agents().length === 0) {
+    <div class="empty-state">
+      <h3>Create your first agent</h3>
+      <p>No agents yet. Create one to get started.</p>
+    </div>
+  } @else {
+    <div class="agent-cards">
+      @for (agent of agents(); track agent.id) {
+        <div class="agent-card">
+          <div class="card-header">
+            <h4>{{ agent.name }}</h4>
+            <span class="provider-badge">{{ agent.provider }}</span>
+          </div>
+          @if (agent.workspacePath) {
+            <p class="workspace">{{ agent.workspacePath }}</p>
+          }
+          <div class="card-actions">
+            <button type="button" class="btn btn-primary" (click)="onRun(agent)">Run</button>
+            <button type="button" class="btn btn-secondary" (click)="onEdit(agent)">Edit</button>
+            <button type="button" class="btn btn-danger" (click)="delete(agent)">Delete</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

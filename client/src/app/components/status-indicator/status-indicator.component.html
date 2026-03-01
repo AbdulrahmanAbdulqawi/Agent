@@ -1,0 +1,10 @@
+<div class="status-indicator" [class]="'status-' + status().toLowerCase()">
+  <span class="dot"></span>
+  <span class="label">{{ status() }}</span>
+  @if (summary()) {
+    <span class="summary">{{ summary() }}</span>
+  }
+  @if (error()) {
+    <span class="error">{{ error() }}</span>
+  }
+</div>
